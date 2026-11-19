@@ -1,0 +1,40 @@
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+venv/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+*.log
+
+# Node & Frontend
+node_modules/
+dashboard/node_modules/
+dist/
+dashboard/dist/
+.npm
+npm-debug.log*
+
+# AI Models & Large Weights
+*.pt
+*.pth
+*.onnx
+*.h5
+*.tflite
+models/
+yolo11n.pt
+
+# User uploads & temp files
+uploads/
+test_ai_images/
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
