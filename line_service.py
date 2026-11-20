@@ -603,6 +603,32 @@ def build_department_flex_card(ticket_data: dict) -> dict:
 
     # กล่องแสดงข้อมูลการรับเรื่อง / สถานะ และเหตุผล
     if status == "ยกเลิก":
+        cancel_box_items = [
+            {
+                "type": "text",
+                "text": f"❌ หน่วยงานยกเลิกการรับเรื่องนี้แล้ว" + (f" ({accepted_by})" if accepted_by else ""),
+                "color": "#DC2626",
+                "size": "xs",
+                "weight": "bold"
+            }
+        ]
+        if status_reason:
+            cancel_box_items.append({
+                "type": "text",
+                "text": f"📌 สาเหตุ: {status_reason}",
+                "color": "#B91C1C",
+                "size": "xs",
+                "weight": "bold",
+                "margin": "xs",
+                "wrap": True
+            })
+        cancel_box_items.append({
+            "type": "text",
+            "text": f"🕒 เวลา: {accepted_at or '-'}" if accepted_at else "สถานะงาน: ยกเลิกเรื่องร้องเรียน",
+            "color": "#991B1B",
+            "size": "xxs",
+            "margin": "xs"
+        })
         body_contents.append({
             "type": "box",
             "layout": "vertical",
@@ -610,22 +636,7 @@ def build_department_flex_card(ticket_data: dict) -> dict:
             "cornerRadius": "8px",
             "paddingAll": "10px",
             "margin": "sm",
-            "contents": [
-                {
-                    "type": "text",
-                    "text": f"❌ หน่วยงานยกเลิกการรับเรื่องนี้แล้ว" + (f" ({accepted_by})" if accepted_by else ""),
-                    "color": "#DC2626",
-                    "size": "xs",
-                    "weight": "bold"
-                },
-                {
-                    "type": "text",
-                    "text": f"🕒 เวลา: {accepted_at or '-'}" if accepted_at else "สถานะงาน: ยกเลิกเรื่องร้องเรียน",
-                    "color": "#991B1B",
-                    "size": "xxs",
-                    "margin": "xs"
-                }
-            ]
+            "contents": cancel_box_items
         })
     elif status == "รอแก้ไข":
         reason_desc = f"📌 สาเหตุ: {status_reason}" if status_reason else "⏳ อยู่ระหว่างจัดเตรียมอุปกรณ์/งบประมาณ"

@@ -575,9 +575,9 @@ def accept_report(ticket_id: str, officer_name: str = "เจ้าหน้า�
     return None
 
 
-def cancel_accept_report(ticket_id: str, officer_name: str = "เจ้าหน้าที่"):
+def cancel_accept_report(ticket_id: str, officer_name: str = "เจ้าหน้าที่", status_reason: str = None):
     """
-    ยกเลิกการรับเรื่อง / ยกเลิกงาน (เปลี่ยนสถานะเป็น 'ยกเลิก' และบันทึกผู้กดยกเลิก)
+    ยกเลิกการรับเรื่อง / ยกเลิกงาน (เปลี่ยนสถานะเป็น 'ยกเลิก' และบันทึกผู้กดยกเลิกพร้อมเหตุผล)
     """
     now_display = datetime.now().strftime("%d/%m/%Y %H:%M")
     now_db = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -588,11 +588,12 @@ def cancel_accept_report(ticket_id: str, officer_name: str = "เจ้าหน
         cur.execute("""
             UPDATE reports
             SET status = 'ยกเลิก',
+                status_reason = %s,
                 accepted_by = %s,
                 accepted_at = %s,
                 updated_at = %s
             WHERE ticket_id = %s
-        """, (officer_name, now_db, now_db, ticket_id))
+        """, (status_reason, officer_name, now_db, now_db, ticket_id))
         updated = cur.rowcount > 0
 
         if updated:
@@ -603,19 +604,21 @@ def cancel_accept_report(ticket_id: str, officer_name: str = "เจ้าหน
     conn.close()
 
     if updated:
+        reason_msg = f" (สาเหตุ: {status_reason})" if status_reason else ""
         log_activity(
             ticket_id=ticket_id,
             action="cancel_accept",
             officer_name=officer_name,
             department=dept,
             status="ยกเลิก",
-            message=f"{dept} ({officer_name}) ได้กดยกเลิกรับเรื่อง/ยกเลิกงาน {ticket_id}"
+            message=f"{dept} ({officer_name}) ได้กดยกเลิกรับเรื่อง/ยกเลิกงาน {ticket_id}{reason_msg}"
         )
         return {
             "ticket_id": ticket_id,
             "accepted_by": officer_name,
             "accepted_at": now_display,
             "status": "ยกเลิก",
+            "status_reason": status_reason,
             "department": dept
         }
     return None

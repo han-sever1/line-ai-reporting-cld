@@ -654,17 +654,44 @@ async def webhook(
 
             # 2. เจ้าหน้าที่กดยกเลิกรับเรื่อง (Cancel Accept)
             elif action == "cancel_accept":
-                cancel_accept_report(ticket_id, officer_name)
-                print(f"⚠️ เจ้าหน้าที่ {officer_name} ({dept_name}) กดยกเลิกรับเรื่อง/ยกเลิกงาน {ticket_id}")
+                reason = params.get("reason")
+                if not reason:
+                    session = get_or_create_session(user_id)
+                    session["waiting_status_reason"] = {
+                        "ticket_id": ticket_id,
+                        "status": "ยกเลิก",
+                        "dept_token": dept_token
+                    }
+                    quick_items = [
+                        {"type": "action", "action": {"type": "postback", "label": "❌ นอกพื้นที่รับผิดชอบ", "data": f"action=cancel_accept&ticket_id={ticket_id}&reason=ไม่อยู่ในพื้นที่รับผิดชอบ", "displayText": "❌ ไม่อยู่ในพื้นที่รับผิดชอบ"}},
+                        {"type": "action", "action": {"type": "postback", "label": "📄 ข้อมูลไม่ชัดเจน", "data": f"action=cancel_accept&ticket_id={ticket_id}&reason=ข้อมูลไม่เพียงพอหรือไม่ชัดเจน", "displayText": "📄 ข้อมูลไม่เพียงพอหรือไม่ชัดเจน"}},
+                        {"type": "action", "action": {"type": "postback", "label": "🔁 แจ้งซ้ำซ้อน", "data": f"action=cancel_accept&ticket_id={ticket_id}&reason=เรื่องร้องเรียนแจ้งซ้ำซ้อน", "displayText": "🔁 เรื่องร้องเรียนแจ้งซ้ำซ้อน"}},
+                        {"type": "action", "action": {"type": "postback", "label": "🏢 นอกเหนือหน้าที่", "data": f"action=cancel_accept&ticket_id={ticket_id}&reason=นอกเหนืออำนาจหน้าที่ของหน่วยงาน", "displayText": "🏢 นอกเหนืออำนาจหน้าที่ของหน่วยงาน"}},
+                        {"type": "action", "action": {"type": "postback", "label": "✍️ พิมพ์เหตุผลเอง", "data": f"action=prompt_reason&status=ยกเลิก&ticket_id={ticket_id}", "displayText": "✍️ พิมพ์เหตุผลเอง"}},
+                        {"type": "action", "action": {"type": "postback", "label": "⏩ ไม่ระบุเหตุผล", "data": f"action=cancel_accept&ticket_id={ticket_id}&reason=-", "displayText": "⏩ ไม่ระบุเหตุผล"}}
+                    ]
+                    reply_quick_reply(
+                        reply_token=reply_token,
+                        text=f"❌ กรุณาเลือกสาเหตุที่ 'ยกเลิกรับเรื่อง' สำหรับ {ticket_id}:",
+                        quick_reply_items=quick_items,
+                        access_token=dept_token
+                    )
+                    continue
+
+                final_reason = None if reason == "-" else reason
+                cancel_accept_report(ticket_id, officer_name, status_reason=final_reason)
+                print(f"⚠️ เจ้าหน้าที่ {officer_name} ({dept_name}) กดยกเลิกรับเรื่อง/ยกเลิกงาน {ticket_id} (สาเหตุ: {final_reason or '-'})")
 
                 # ส่ง LINE แจ้งเตือนประชาชนอัตโนมัติเมื่อหน่วยงานยกเลิกงาน
                 citizen_user_id = report.get("line_user_id")
                 if citizen_user_id:
+                    reason_msg_citizen = f"สาเหตุที่ยกเลิก: {final_reason}\n\n" if final_reason else ""
                     cit_msg = (
                         f"❌ แจ้งเตือนเรื่องร้องเรียน\n\n"
                         f"เลขอ้างอิง: {ticket_id}\n"
                         f"สถานะ: ยกเลิกเรื่องร้องเรียน ❌\n"
-                        f"หน่วยงาน: {dept_name}\n\n"
+                        f"หน่วยงาน: {dept_name}\n"
+                        f"{reason_msg_citizen}"
                         f"รายละเอียด: เจ้าหน้าที่ได้กดยกเลิกรับเรื่อง/ยกเลิกงานนี้แล้ว หากมีข้อสงสัยหรือต้องการสอบถามเพิ่มเติม สามารถติดต่อ อบต.มูโนะ ได้ตลอดเวลาครับ"
                     )
                     try:
@@ -861,13 +888,26 @@ async def webhook(
                 rep = get_report_by_ticket(t_id)
                 if rep:
                     dept_name = rep.get("department") or rep.get("ai_department") or "หน่วยงานที่รับผิดชอบ"
-                    update_report_status(t_id, t_status, officer_name=officer_name, status_reason=custom_reason)
-                    print(f"🔄 เจ้าหน้าที่ {officer_name} ({dept_name}) ระบุเหตุผล {t_id} -> {t_status} ({custom_reason})")
+                    if t_status == "ยกเลิก":
+                        cancel_accept_report(t_id, officer_name=officer_name, status_reason=custom_reason)
+                        print(f"❌ เจ้าหน้าที่ {officer_name} ({dept_name}) ระบุเหตุผลยกเลิก {t_id} -> ({custom_reason})")
+                    else:
+                        update_report_status(t_id, t_status, officer_name=officer_name, status_reason=custom_reason)
+                        print(f"🔄 เจ้าหน้าที่ {officer_name} ({dept_name}) ระบุเหตุผล {t_id} -> {t_status} ({custom_reason})")
 
                     # ส่ง LINE แจ้งเตือนประชาชน
                     cit_uid = rep.get("line_user_id")
                     if cit_uid:
-                        if t_status == "รอแก้ไข":
+                        if t_status == "ยกเลิก":
+                            cit_msg = (
+                                f"❌ แจ้งเตือนเรื่องร้องเรียน\n\n"
+                                f"เลขอ้างอิง: {t_id}\n"
+                                f"สถานะ: ยกเลิกเรื่องร้องเรียน ❌\n"
+                                f"หน่วยงาน: {dept_name}\n"
+                                f"สาเหตุที่ยกเลิก: {custom_reason}\n\n"
+                                f"รายละเอียด: เจ้าหน้าที่ได้กดยกเลิกรับเรื่อง/ยกเลิกงานนี้แล้ว หากมีข้อสงสัยหรือต้องการสอบถามเพิ่มเติม สามารถติดต่อ อบต.มูโนะ ได้ตลอดเวลาครับ"
+                            )
+                        elif t_status == "รอแก้ไข":
                             cit_msg = (
                                 f"🔔 แจ้งเตือนความคืบหน้าเรื่องร้องเรียน\n\n"
                                 f"เลขอ้างอิง: {t_id}\n"

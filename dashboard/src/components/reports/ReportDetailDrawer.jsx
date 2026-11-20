@@ -33,6 +33,13 @@ function ReportDetailDrawer({
     "กำลังตรวจหน้างาน",
   ];
 
+  const cancelPresetReasons = [
+    "อยู่นอกพื้นที่รับผิดชอบ",
+    "ข้อมูลไม่เพียงพอ/ไม่ชัดเจน",
+    "เรื่องร้องเรียนแจ้งซ้ำซ้อน",
+    "นอกเหนืออำนาจหน้าที่ของหน่วยงาน",
+  ];
+
   useEffect(() => {
     if (selectedReport) {
       setSelectedStatus(selectedReport.status || "รับเรื่องแล้ว");
@@ -41,7 +48,8 @@ function ReportDetailDrawer({
 
       const isPreset =
         waitFixPresetReasons.includes(currentReason) ||
-        inProgressPresetReasons.includes(currentReason);
+        inProgressPresetReasons.includes(currentReason) ||
+        cancelPresetReasons.includes(currentReason);
 
       if (currentReason && !isPreset) {
         setIsCustomReason(true);
@@ -55,7 +63,7 @@ function ReportDetailDrawer({
 
   const handleStatusChange = (newStatus) => {
     setSelectedStatus(newStatus);
-    if (newStatus !== "รอแก้ไข" && newStatus !== "กำลังดำเนินการ") {
+    if (newStatus !== "รอแก้ไข" && newStatus !== "กำลังดำเนินการ" && newStatus !== "ยกเลิก") {
       updateStatus(selectedReport.ticket_id, newStatus, null);
     } else {
       if (newStatus === "รอแก้ไข") {
@@ -63,6 +71,9 @@ function ReportDetailDrawer({
         setIsCustomReason(false);
       } else if (newStatus === "กำลังดำเนินการ") {
         setSelectedReason(inProgressPresetReasons[0]);
+        setIsCustomReason(false);
+      } else if (newStatus === "ยกเลิก") {
+        setSelectedReason(cancelPresetReasons[0]);
         setIsCustomReason(false);
       }
     }
@@ -320,12 +331,23 @@ function ReportDetailDrawer({
           </select>
         </div>
 
-        {/* ตัวเลือกเหตุผลเมื่อเป็น 'รอแก้ไข' หรือ 'กำลังดำเนินการ' */}
-        {(selectedStatus === "รอแก้ไข" || selectedStatus === "กำลังดำเนินการ") && (
+        {/* ตัวเลือกเหตุผลเมื่อเป็น 'รอแก้ไข', 'กำลังดำเนินการ' หรือ 'ยกเลิก' */}
+        {(selectedStatus === "รอแก้ไข" || selectedStatus === "กำลังดำเนินการ" || selectedStatus === "ยกเลิก") && (
           <div
             style={{
-              background: selectedStatus === "รอแก้ไข" ? "#FFFBEB" : "#EFF6FF",
-              border: `1px solid ${selectedStatus === "รอแก้ไข" ? "#FCD34D" : "#BFDBFE"}`,
+              background:
+                selectedStatus === "รอแก้ไข"
+                  ? "#FFFBEB"
+                  : selectedStatus === "กำลังดำเนินการ"
+                  ? "#EFF6FF"
+                  : "#FEF2F2",
+              border: `1px solid ${
+                selectedStatus === "รอแก้ไข"
+                  ? "#FCD34D"
+                  : selectedStatus === "กำลังดำเนินการ"
+                  ? "#BFDBFE"
+                  : "#FECACA"
+              }`,
               borderRadius: "8px",
               padding: "12px",
               marginBottom: "14px",
@@ -336,13 +358,20 @@ function ReportDetailDrawer({
                 display: "block",
                 fontSize: "12px",
                 fontWeight: "bold",
-                color: selectedStatus === "รอแก้ไข" ? "#B45309" : "#1D4ED8",
+                color:
+                  selectedStatus === "รอแก้ไข"
+                    ? "#B45309"
+                    : selectedStatus === "กำลังดำเนินการ"
+                    ? "#1D4ED8"
+                    : "#DC2626",
                 marginBottom: "6px",
               }}
             >
               {selectedStatus === "รอแก้ไข"
                 ? "⏳ ระบุสาเหตุที่รอแก้ไข:"
-                : "⚙️ ระบุความคืบหน้าการทำงาน:"}
+                : selectedStatus === "กำลังดำเนินการ"
+                ? "⚙️ ระบุความคืบหน้าการทำงาน:"
+                : "❌ ระบุสาเหตุที่ยกเลิกรับเรื่อง:"}
             </label>
 
             <select
@@ -365,13 +394,16 @@ function ReportDetailDrawer({
                 background: "#FFFFFF",
               }}
             >
-              {(selectedStatus === "รอแก้ไข" ? waitFixPresetReasons : inProgressPresetReasons).map(
-                (opt) => (
-                  <option key={opt} value={opt}>
-                    {opt}
-                  </option>
-                )
-              )}
+              {(selectedStatus === "รอแก้ไข"
+                ? waitFixPresetReasons
+                : selectedStatus === "กำลังดำเนินการ"
+                ? inProgressPresetReasons
+                : cancelPresetReasons
+              ).map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
               <option value="custom">✍️ พิมพ์เหตุผลอื่นเอง...</option>
             </select>
 
@@ -381,7 +413,9 @@ function ReportDetailDrawer({
                 placeholder={
                   selectedStatus === "รอแก้ไข"
                     ? "เช่น รองบประมาณจัดซื้อท่อ..."
-                    : "เช่น เจ้าหน้าที่กำลังเดินทางเข้าพื้นที่..."
+                    : selectedStatus === "กำลังดำเนินการ"
+                    ? "เช่น เจ้าหน้าที่กำลังเดินทางเข้าพื้นที่..."
+                    : "เช่น อยู่นอกเขตรับผิดชอบของ อบต. ..."
                 }
                 value={customReasonText}
                 onChange={(e) => setCustomReasonText(e.target.value)}
@@ -407,7 +441,12 @@ function ReportDetailDrawer({
                 fontSize: "13px",
                 fontWeight: "bold",
                 color: "#FFFFFF",
-                backgroundColor: selectedStatus === "รอแก้ไข" ? "#D97706" : "#2563EB",
+                backgroundColor:
+                  selectedStatus === "รอแก้ไข"
+                    ? "#D97706"
+                    : selectedStatus === "กำลังดำเนินการ"
+                    ? "#2563EB"
+                    : "#DC2626",
                 border: "none",
                 borderRadius: "6px",
                 cursor: "pointer",
