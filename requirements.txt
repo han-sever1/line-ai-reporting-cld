@@ -1,0 +1,6 @@
+# รายชื่อ package ที่ต้องติดตั้ง
+fastapi
+uvicorn
+requests
+python-dotenv
+ultralytics

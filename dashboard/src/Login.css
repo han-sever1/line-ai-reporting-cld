@@ -1,0 +1,226 @@
+@import url('https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700&family=Sarabun:wght@400;500;600&display=swap');
+
+/* ===== Layout หลักของหน้า Login ===== */
+.lp-wrap {
+  --ink: #12202c;
+  --muted: #6b7b89;
+  --cream: #f5f7f6;
+  --navy-950: #0b1626;
+  --navy-800: #16283d;
+  --navy-700: #1f3350;
+  --line-green: #06c755;
+  --line-green-dim: #059a44;
+  --error: #e4572e;
+
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--navy-950);
+  font-family: 'Sarabun', sans-serif;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.lp-card {
+  width: 100%;
+  max-width: 880px;
+  min-height: 520px;
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  background: var(--cream);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+/* ===== ฝั่งซ้าย: แสดงข้อมูลระบบ/ข้อความเชิญเข้าสู่ระบบ ===== */
+.lp-side {
+  position: relative;
+  background:
+    radial-gradient(circle at 22% 20%, rgba(6, 199, 85, 0.16), transparent 45%),
+    linear-gradient(160deg, var(--navy-800) 0%, var(--navy-950) 100%);
+  padding: 48px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: #eef3f6;
+  overflow: hidden;
+}
+
+.lp-side::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: radial-gradient(circle at 30% 30%, black, transparent 70%);
+}
+
+.lp-eyebrow {
+  position: relative;
+  font-size: 12.5px;
+  letter-spacing: 0.14em;
+  font-weight: 600;
+  color: var(--line-green);
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lp-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--line-green);
+  box-shadow: 0 0 0 0 rgba(6, 199, 85, 0.6);
+  animation: lp-pulse 2.2s ease-out infinite;
+}
+
+@keyframes lp-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(6, 199, 85, 0.55);
+  }
+  70% {
+    box-shadow: 0 0 0 9px rgba(6, 199, 85, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(6, 199, 85, 0);
+  }
+}
+
+.lp-bubble-art {
+  position: relative;
+  margin-top: 28px;
+}
+
+.lp-headline {
+  position: relative;
+  font-family: 'Kanit', sans-serif;
+  font-weight: 600;
+  font-size: 30px;
+  line-height: 1.35;
+  margin: 22px 0 10px;
+}
+
+.lp-headline span {
+  color: var(--line-green);
+}
+
+.lp-subtext {
+  position: relative;
+  font-size: 14.5px;
+  color: #a6b4c0;
+  line-height: 1.7;
+  max-width: 34ch;
+}
+
+.lp-footnote {
+  position: relative;
+  font-size: 12px;
+  color: #5c6c7a;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* ===== ฝั่งขวา: ฟอร์ม login ===== */
+.lp-form-side {
+  padding: 52px 44px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.lp-title {
+  font-family: 'Kanit', sans-serif;
+  font-weight: 600;
+  font-size: 24px;
+  color: var(--ink);
+  margin: 0 0 6px;
+}
+
+.lp-desc {
+  font-size: 14px;
+  color: var(--muted);
+  margin: 0 0 32px;
+}
+
+.lp-field {
+  margin-bottom: 18px;
+}
+
+.lp-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  margin-bottom: 7px;
+}
+
+.lp-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 13px 15px;
+  font-family: 'Sarabun', sans-serif;
+  font-size: 14.5px;
+  color: var(--ink);
+  background: #ffffff;
+  border: 1.5px solid #dde3e7;
+  border-radius: 10px;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.lp-input::placeholder {
+  color: #9fabb4;
+}
+
+.lp-input:focus {
+  border-color: var(--line-green);
+  box-shadow: 0 0 0 4px rgba(6, 199, 85, 0.14);
+}
+
+.lp-btn {
+  width: 100%;
+  margin-top: 10px;
+  padding: 13px 15px;
+  border: none;
+  border-radius: 10px;
+  background: var(--line-green);
+  color: #ffffff;
+  font-family: 'Sarabun', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.05s ease;
+}
+
+.lp-btn:hover:not(:disabled) {
+  background: var(--line-green-dim);
+}
+
+.lp-btn:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+.lp-btn:disabled {
+  background: #b9c2c8;
+  cursor: not-allowed;
+}
+
+@media (max-width: 720px) {
+  .lp-card {
+    grid-template-columns: 1fr;
+  }
+  .lp-side {
+    display: none;
+  }
+  .lp-form-side {
+    padding: 40px 28px;
+  }
+}

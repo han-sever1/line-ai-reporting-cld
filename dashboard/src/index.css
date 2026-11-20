@@ -1,0 +1,35 @@
+/* =========================================================================
+   INDEX.CSS — Global Reset & Base Styles
+   ไฟล์นี้ตั้งค่าพื้นฐานของทั้งหน้าเว็บ เช่น reset margin, font, box-sizing
+   เพื่อให้ทุก component เริ่มจากฐานเดียวกันไม่มีสไตล์ default ของ browser มาแทรก
+   ========================================================================= */
+
+/* ดึงฟอนต์ Prompt (หัวข้อ/ตัวเลข) และ Noto Sans Thai (เนื้อหาทั่วไป) จาก Google Fonts */
+@import url("https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap");
+
+/* ตั้ง box-sizing เป็น border-box ทุก element — padding/border จะไม่ทำให้กว้างเกินกว่าที่กำหนด */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;    /* ล้าง margin default ของ browser ทั้งหมด */
+  padding: 0;   /* ล้าง padding default ของ browser ทั้งหมด */
+}
+
+/* ตั้งค่า body พื้นฐาน */
+body {
+  margin: 0;                                                    /* ล้าง margin ของ body */
+  font-family: "Noto Sans Thai", "Segoe UI", Arial, sans-serif; /* ฟอนต์หลักภาษาไทยอ่านง่าย */
+  -webkit-font-smoothing: antialiased;                          /* ทำให้ตัวอักษรขอบเรียบบน webkit */
+  -moz-osx-font-smoothing: grayscale;                           /* ทำให้ตัวอักษรขอบเรียบบน Firefox/macOS */
+}
+
+/* ล้างสไตล์ default ของ #root ที่ Vite สร้างมา ไม่ให้ไปรบกวน layout ใหม่ */
+#root {
+  width: 100%;        /* ให้ root กว้างเต็มจอ */
+  max-width: 100%;    /* ไม่จำกัดความกว้างสูงสุด */
+  margin: 0;          /* ไม่มี margin */
+  text-align: left;   /* จัดข้อความชิดซ้ายเป็น default */
+  border: none;       /* ไม่มีเส้นขอบ */
+  min-height: 100vh;  /* ให้สูงเต็มจอเสมอ */
+}
