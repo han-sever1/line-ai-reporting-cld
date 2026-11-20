@@ -231,6 +231,11 @@ function ReportsPage({
                                 ❌ สาเหตุ: {report.status_reason}
                               </div>
                             )}
+                            {report.status === "ดำเนินการเสร็จสิ้น" && report.status_reason && (
+                              <div style={{ fontSize: "11px", color: "#059669", marginTop: "3px", fontWeight: "500" }}>
+                                🎉 ผลการแก้ไข: {report.status_reason}
+                              </div>
+                            )}
                           </td>
                           <td>
                             <div className="ai-score-cell">

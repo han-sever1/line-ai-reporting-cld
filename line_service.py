@@ -695,6 +695,25 @@ def build_department_flex_card(ticket_data: dict) -> dict:
             ]
         })
     elif status == "ดำเนินการเสร็จสิ้น":
+        done_contents = [
+            {
+                "type": "text",
+                "text": f"🎉 ปัญหาได้รับการแก้ไขเสร็จสิ้นแล้ว" + (f" ({accepted_by})" if accepted_by else ""),
+                "color": "#065F46",
+                "size": "xs",
+                "weight": "bold"
+            }
+        ]
+        if status_reason:
+            done_contents.append({
+                "type": "text",
+                "text": f"📌 ผลการแก้ไข: {status_reason}",
+                "color": "#047857",
+                "size": "xs",
+                "weight": "bold",
+                "margin": "xs",
+                "wrap": True
+            })
         body_contents.append({
             "type": "box",
             "layout": "vertical",
@@ -702,15 +721,7 @@ def build_department_flex_card(ticket_data: dict) -> dict:
             "cornerRadius": "8px",
             "paddingAll": "10px",
             "margin": "sm",
-            "contents": [
-                {
-                    "type": "text",
-                    "text": f"🎉 ปัญหาได้รับการแก้ไขเสร็จสิ้นแล้ว" + (f" ({accepted_by})" if accepted_by else ""),
-                    "color": "#065F46",
-                    "size": "xs",
-                    "weight": "bold"
-                }
-            ]
+            "contents": done_contents
         })
     elif accepted_by:
         body_contents.append({

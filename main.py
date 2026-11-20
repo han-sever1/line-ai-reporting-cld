@@ -715,16 +715,17 @@ async def webhook(
             # 3. เจ้าหน้าที่กดพิมพ์เหตุผลเอง (Prompt Reason)
             elif action == "prompt_reason":
                 session = get_or_create_session(user_id)
-                norm_status = "กำลังดำเนินการ" if new_status in ["กำลังทำ", "กำลังดำเนินการ"] else (new_status or "รอแก้ไข")
+                norm_status = "กำลังดำเนินการ" if new_status in ["กำลังทำ", "กำลังดำเนินการ"] else ("ดำเนินการเสร็จสิ้น" if new_status in ["เสร็จแล้ว", "ดำเนินการเสร็จสิ้น"] else (new_status or "รอแก้ไข"))
                 session["waiting_status_reason"] = {
                     "ticket_id": ticket_id,
                     "status": norm_status,
                     "dept_token": dept_token
                 }
                 if reply_token:
+                    prompt_title = "ผลการแก้ไข/สรุปผลงาน" if norm_status in ["ดำเนินการเสร็จสิ้น", "เสร็จแล้ว"] else ("สาเหตุที่ยกเลิก" if norm_status == "ยกเลิก" else "เหตุผลหรือความคืบหน้า")
                     reply_message(
                         reply_token,
-                        f"✍️ กรุณาพิมพ์เหตุผลหรือความคืบหน้าสำหรับ {ticket_id} ({norm_status}) ในช่องแชทได้เลยครับ",
+                        f"✍️ กรุณาพิมพ์{prompt_title}สำหรับ {ticket_id} ในช่องแชทได้เลยครับ",
                         access_token=dept_token
                     )
                 continue
@@ -734,8 +735,8 @@ async def webhook(
                 norm_status = "กำลังดำเนินการ" if new_status in ["กำลังทำ", "กำลังดำเนินการ"] else new_status
                 reason = params.get("reason")
 
-                # ถ้ากด รอแก้ไข หรือ กำลังทำ แล้วยังไม่ได้ระบุเหตุผล -> ส่ง Quick Reply ให้เลือกหรือพิมพ์เอง
-                if norm_status in ["รอแก้ไข", "กำลังดำเนินการ"] and not reason:
+                # ถ้ากด รอแก้ไข, กำลังทำ หรือ ดำเนินการเสร็จสิ้น แล้วยังไม่ได้ระบุเหตุผล -> ส่ง Quick Reply ให้เลือกหรือพิมพ์เอง
+                if norm_status in ["รอแก้ไข", "กำลังดำเนินการ", "ดำเนินการเสร็จสิ้น", "เสร็จแล้ว"] and not reason:
                     session = get_or_create_session(user_id)
                     session["waiting_status_reason"] = {
                         "ticket_id": ticket_id,
@@ -754,6 +755,21 @@ async def webhook(
                         reply_quick_reply(
                             reply_token=reply_token,
                             text=f"⏳ กรุณาเลือกสาเหตุที่ 'รอแก้ไข' สำหรับ {ticket_id}:",
+                            quick_reply_items=quick_items,
+                            access_token=dept_token
+                        )
+                    elif norm_status in ["ดำเนินการเสร็จสิ้น", "เสร็จแล้ว"]:
+                        quick_items = [
+                            {"type": "action", "action": {"type": "postback", "label": "🔧 ซ่อมแซมเรียบร้อย", "data": f"action=status&status=ดำเนินการเสร็จสิ้น&ticket_id={ticket_id}&reason=ซ่อมแซมเรียบร้อยแล้ว", "displayText": "🔧 ซ่อมแซมเรียบร้อยแล้ว"}},
+                            {"type": "action", "action": {"type": "postback", "label": "🧹 จัดเก็บเรียบร้อย", "data": f"action=status&status=ดำเนินการเสร็จสิ้น&ticket_id={ticket_id}&reason=ทำความสะอาดและจัดเก็บพื้นที่เรียบร้อย", "displayText": "🧹 ทำความสะอาดและจัดเก็บพื้นที่เรียบร้อย"}},
+                            {"type": "action", "action": {"type": "postback", "label": "💡 เปลี่ยนอุปกรณ์แล้ว", "data": f"action=status&status=ดำเนินการเสร็จสิ้น&ticket_id={ticket_id}&reason=เปลี่ยนอุปกรณ์/หลอดไฟใหม่เรียบร้อย", "displayText": "💡 เปลี่ยนอุปกรณ์/หลอดไฟใหม่เรียบร้อย"}},
+                            {"type": "action", "action": {"type": "postback", "label": "✅ ตรวจสอบใช้งานได้ปกติ", "data": f"action=status&status=ดำเนินการเสร็จสิ้น&ticket_id={ticket_id}&reason=ตรวจสอบแล้วใช้งานได้ตามปกติ", "displayText": "✅ ตรวจสอบแล้วใช้งานได้ตามปกติ"}},
+                            {"type": "action", "action": {"type": "postback", "label": "✍️ พิมพ์สรุปผลงานเอง", "data": f"action=prompt_reason&status=ดำเนินการเสร็จสิ้น&ticket_id={ticket_id}", "displayText": "✍️ พิมพ์สรุปผลงานเอง"}},
+                            {"type": "action", "action": {"type": "postback", "label": "⏩ ไม่ระบุผลงาน", "data": f"action=status&status=ดำเนินการเสร็จสิ้น&ticket_id={ticket_id}&reason=-", "displayText": "⏩ ไม่ระบุผลงาน"}}
+                        ]
+                        reply_quick_reply(
+                            reply_token=reply_token,
+                            text=f"🎉 กรุณาเลือกสรุปผลการดำเนินงานสำหรับ {ticket_id}:",
                             quick_reply_items=quick_items,
                             access_token=dept_token
                         )
@@ -806,12 +822,15 @@ async def webhook(
                             f"อบต.มูโนะ กำลังเข้าดำเนินการแก้ไขปัญหาครับ"
                         )
                     elif norm_status in ["ดำเนินการเสร็จสิ้น", "เสร็จแล้ว"]:
+                        reason_line = f"ผลการแก้ไข: {status_reason_val}\n\n" if status_reason_val else "รายละเอียด: ปัญหาได้รับการแก้ไขเสร็จสิ้นเรียบร้อยแล้ว\n\n"
                         cit_msg = (
-                            f"🎉 แจ้งเตือนความคืบหน้าเรื่องร้องเรียน\n\n"
+                            f"🎉 แจ้งเตือนผลการดำเนินงาน\n\n"
                             f"เลขอ้างอิง: {ticket_id}\n"
-                            f"สถานะ: ดำเนินการเสร็จสิ้น ✅\n"
-                            f"หน่วยงาน: {dept_name}\n\n"
-                            f"รายละเอียด: ปัญหาได้รับการแก้ไขเรียบร้อยแล้ว ขอบคุณที่ร่วมแจ้งปัญหาเพื่อพัฒนาท้องถิ่นของเราครับ"
+                            f"สถานะ: ดำเนินการเสร็จสิ้นแล้ว ✅\n"
+                            f"หน่วยงาน: {dept_name}\n"
+                            f"{reason_line}"
+                            f"อบต.มูโนะ ขอขอบคุณท่านที่ร่วมเป็นหูเป็นตาในการแจ้งปัญหาเพื่อพัฒนาชุมชนของเราครับ 🙏✨\n"
+                            f"(หากปัญหายังไม่เรียบร้อย หรือเกิดขึ้นซ้ำ สามารถแจ้งผ่านระบบนี้ได้ตลอดเวลาครับ)"
                         )
                     elif norm_status == "ยกเลิก":
                         cit_msg = (
@@ -915,6 +934,16 @@ async def webhook(
                                 f"หน่วยงาน: {dept_name}\n"
                                 f"สาเหตุ: {custom_reason}\n\n"
                                 f"อบต.มูโนะ กำลังเร่งประสานงานและดำเนินการครับ"
+                            )
+                        elif t_status in ["ดำเนินการเสร็จสิ้น", "เสร็จแล้ว"]:
+                            cit_msg = (
+                                f"🎉 แจ้งเตือนผลการดำเนินงาน\n\n"
+                                f"เลขอ้างอิง: {t_id}\n"
+                                f"สถานะ: ดำเนินการเสร็จสิ้นแล้ว ✅\n"
+                                f"หน่วยงาน: {dept_name}\n"
+                                f"ผลการแก้ไข: {custom_reason}\n\n"
+                                f"อบต.มูโนะ ขอขอบคุณท่านที่ร่วมเป็นหูเป็นตาในการแจ้งปัญหาเพื่อพัฒนาชุมชนของเราครับ 🙏✨\n"
+                                f"(หากปัญหายังไม่เรียบร้อย หรือเกิดขึ้นซ้ำ สามารถแจ้งผ่านระบบนี้ได้ตลอดเวลาครับ)"
                             )
                         else:
                             cit_msg = (
@@ -1887,12 +1916,14 @@ def change_report_status(ticket_id: str, data: StatusUpdate):
                 f"เจ้าหน้าที่กำลังลงพื้นที่ดำเนินการแก้ไขปัญหาให้ครับ ✨"
             )
         elif new_status in ["ดำเนินการเสร็จสิ้น", "เสร็จแล้ว"]:
+            reason_line = f"ผลการแก้ไข: {data.status_reason}\n\n" if data.status_reason else ""
             line_text = (
-                f"✅ ดำเนินการแก้ไขปัญหาเสร็จสิ้นแล้ว\n\n"
+                f"🎉 ดำเนินการแก้ไขปัญหาเสร็จสิ้นแล้ว\n\n"
                 f"🎫 Ticket: #{ticket_id}\n"
                 f"หน่วยงาน: 🏢 {agency}\n"
                 f"รายละเอียด: {desc}\n\n"
-                f"เจ้าหน้าที่ได้ดำเนินการแก้ไขปัญหาเรียบร้อยแล้ว ขอบคุณที่ร่วมแจ้งปัญหาและช่วยดูแลชุมชนของเราครับ 🏛️"
+                f"{reason_line}"
+                f"อบต.มูโนะ ขอขอบคุณท่านที่ร่วมเป็นหูเป็นตาในการแจ้งปัญหาเพื่อพัฒนาชุมชนของเราครับ 🙏✨"
             )
         elif new_status in ["รอแก้ไข"]:
             line_text = (

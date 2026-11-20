@@ -40,6 +40,13 @@ function ReportDetailDrawer({
     "นอกเหนืออำนาจหน้าที่ของหน่วยงาน",
   ];
 
+  const donePresetReasons = [
+    "ซ่อมแซมเรียบร้อยแล้ว",
+    "ทำความสะอาดและจัดเก็บพื้นที่เรียบร้อย",
+    "เปลี่ยนอุปกรณ์/หลอดไฟใหม่เรียบร้อย",
+    "ตรวจสอบแล้วใช้งานได้ตามปกติ",
+  ];
+
   useEffect(() => {
     if (selectedReport) {
       setSelectedStatus(selectedReport.status || "รับเรื่องแล้ว");
@@ -49,7 +56,8 @@ function ReportDetailDrawer({
       const isPreset =
         waitFixPresetReasons.includes(currentReason) ||
         inProgressPresetReasons.includes(currentReason) ||
-        cancelPresetReasons.includes(currentReason);
+        cancelPresetReasons.includes(currentReason) ||
+        donePresetReasons.includes(currentReason);
 
       if (currentReason && !isPreset) {
         setIsCustomReason(true);
@@ -63,7 +71,7 @@ function ReportDetailDrawer({
 
   const handleStatusChange = (newStatus) => {
     setSelectedStatus(newStatus);
-    if (newStatus !== "รอแก้ไข" && newStatus !== "กำลังดำเนินการ" && newStatus !== "ยกเลิก") {
+    if (newStatus !== "รอแก้ไข" && newStatus !== "กำลังดำเนินการ" && newStatus !== "ยกเลิก" && newStatus !== "ดำเนินการเสร็จสิ้น") {
       updateStatus(selectedReport.ticket_id, newStatus, null);
     } else {
       if (newStatus === "รอแก้ไข") {
@@ -74,6 +82,9 @@ function ReportDetailDrawer({
         setIsCustomReason(false);
       } else if (newStatus === "ยกเลิก") {
         setSelectedReason(cancelPresetReasons[0]);
+        setIsCustomReason(false);
+      } else if (newStatus === "ดำเนินการเสร็จสิ้น") {
+        setSelectedReason(donePresetReasons[0]);
         setIsCustomReason(false);
       }
     }
@@ -331,8 +342,11 @@ function ReportDetailDrawer({
           </select>
         </div>
 
-        {/* ตัวเลือกเหตุผลเมื่อเป็น 'รอแก้ไข', 'กำลังดำเนินการ' หรือ 'ยกเลิก' */}
-        {(selectedStatus === "รอแก้ไข" || selectedStatus === "กำลังดำเนินการ" || selectedStatus === "ยกเลิก") && (
+        {/* ตัวเลือกเหตุผลเมื่อเป็น 'รอแก้ไข', 'กำลังดำเนินการ', 'ยกเลิก' หรือ 'ดำเนินการเสร็จสิ้น' */}
+        {(selectedStatus === "รอแก้ไข" ||
+          selectedStatus === "กำลังดำเนินการ" ||
+          selectedStatus === "ยกเลิก" ||
+          selectedStatus === "ดำเนินการเสร็จสิ้น") && (
           <div
             style={{
               background:
@@ -340,13 +354,17 @@ function ReportDetailDrawer({
                   ? "#FFFBEB"
                   : selectedStatus === "กำลังดำเนินการ"
                   ? "#EFF6FF"
-                  : "#FEF2F2",
+                  : selectedStatus === "ยกเลิก"
+                  ? "#FEF2F2"
+                  : "#ECFDF5",
               border: `1px solid ${
                 selectedStatus === "รอแก้ไข"
                   ? "#FCD34D"
                   : selectedStatus === "กำลังดำเนินการ"
                   ? "#BFDBFE"
-                  : "#FECACA"
+                  : selectedStatus === "ยกเลิก"
+                  ? "#FECACA"
+                  : "#A7F3D0"
               }`,
               borderRadius: "8px",
               padding: "12px",
@@ -363,7 +381,9 @@ function ReportDetailDrawer({
                     ? "#B45309"
                     : selectedStatus === "กำลังดำเนินการ"
                     ? "#1D4ED8"
-                    : "#DC2626",
+                    : selectedStatus === "ยกเลิก"
+                    ? "#DC2626"
+                    : "#065F46",
                 marginBottom: "6px",
               }}
             >
@@ -371,7 +391,9 @@ function ReportDetailDrawer({
                 ? "⏳ ระบุสาเหตุที่รอแก้ไข:"
                 : selectedStatus === "กำลังดำเนินการ"
                 ? "⚙️ ระบุความคืบหน้าการทำงาน:"
-                : "❌ ระบุสาเหตุที่ยกเลิกรับเรื่อง:"}
+                : selectedStatus === "ยกเลิก"
+                ? "❌ ระบุสาเหตุที่ยกเลิกรับเรื่อง:"
+                : "🎉 ระบุผลการแก้ไข/สรุปผลงาน:"}
             </label>
 
             <select
@@ -398,7 +420,9 @@ function ReportDetailDrawer({
                 ? waitFixPresetReasons
                 : selectedStatus === "กำลังดำเนินการ"
                 ? inProgressPresetReasons
-                : cancelPresetReasons
+                : selectedStatus === "ยกเลิก"
+                ? cancelPresetReasons
+                : donePresetReasons
               ).map((opt) => (
                 <option key={opt} value={opt}>
                   {opt}
@@ -415,7 +439,9 @@ function ReportDetailDrawer({
                     ? "เช่น รองบประมาณจัดซื้อท่อ..."
                     : selectedStatus === "กำลังดำเนินการ"
                     ? "เช่น เจ้าหน้าที่กำลังเดินทางเข้าพื้นที่..."
-                    : "เช่น อยู่นอกเขตรับผิดชอบของ อบต. ..."
+                    : selectedStatus === "ยกเลิก"
+                    ? "เช่น อยู่นอกเขตรับผิดชอบของ อบต. ..."
+                    : "เช่น ซ่อมแซมกลบหลุมลาดยางเรียบร้อย..."
                 }
                 value={customReasonText}
                 onChange={(e) => setCustomReasonText(e.target.value)}
@@ -446,7 +472,9 @@ function ReportDetailDrawer({
                     ? "#D97706"
                     : selectedStatus === "กำลังดำเนินการ"
                     ? "#2563EB"
-                    : "#DC2626",
+                    : selectedStatus === "ยกเลิก"
+                    ? "#DC2626"
+                    : "#059669",
                 border: "none",
                 borderRadius: "6px",
                 cursor: "pointer",
@@ -486,6 +514,13 @@ function ReportDetailDrawer({
           <p className="detail-info">
             <strong>สาเหตุ: </strong>
             <span style={{ color: "#dc2626", fontWeight: "bold" }}>
+              {selectedReport.status_reason || "-"}
+            </span>
+          </p>
+        ) : selectedReport.status === "ดำเนินการเสร็จสิ้น" ? (
+          <p className="detail-info">
+            <strong>ผลการแก้ไข: </strong>
+            <span style={{ color: "#059669", fontWeight: "bold" }}>
               {selectedReport.status_reason || "-"}
             </span>
           </p>
